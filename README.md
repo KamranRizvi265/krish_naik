@@ -17,6 +17,7 @@ A comprehensive, hands-on learning repository exploring the **LangChain** ecosys
    - [3. Custom Tools (`3-tools.ipynb`)](#3-custom-tools-3-toolsipynb)
    - [4. Message Types & History (`4-messages.ipynb`)](#4-message-types--history-4-messagesipynb)
    - [5. Structured Output (`5-structuredoutput.ipynb`)](#5-structured-output-5-structuredoutputipynb)
+   - [6. Middleware (`6-middleware.ipynb`)](#6-middleware-6-middlewareipynb)
 6. [Best Practices](#-best-practices)
 7. [Contributing & License](#-contributing--license)
 
@@ -36,13 +37,12 @@ Through interactive notebooks, you will learn to build agents, manage conversati
 ├── .env                  # API credentials (Git ignored)
 ├── pyproject.toml        # Project metadata and python dependencies list
 ├── uv.lock               # Lockfile for reproducible package installation
-├── main.py               # Basic sanity-check Python script
-└── krish_naik/           # Main folder containing tutorial Jupyter Notebooks
-    ├── 1-intro.ipynb             # LangChain & Agent fundamentals
-    ├── 2-model_integration.ipynb  # Multi-LLM provider setups, streaming & batching
-    ├── 3-tools.ipynb             # Creating, binding, and executing custom tools
-    ├── 4-messages.ipynb          # Message schemas, roles, state, and metadata
-    └── 5-structuredoutput.ipynb  # Enforcing Pydantic schemas & TypedDict outputs
+├── 1-intro.ipynb             # LangChain & Agent fundamentals
+├── 2-model_integration.ipynb  # Multi-LLM provider setups, streaming & batching
+├── 3-tools.ipynb             # Creating, binding, and executing custom tools
+├── 4-messages.ipynb          # Message schemas, roles, state, and metadata
+├── 5-structuredoutput.ipynb  # Enforcing Pydantic schemas & TypedDict outputs
+└── 6-middleware.ipynb        # Intercepting workflows (Summarization & Human-in-the-loop)
 ```
 
 ---
@@ -128,7 +128,7 @@ If you prefer standard Python tooling:
 
 ## 📓 Notebook Summaries & Key Concepts
 
-### 1. Agent Introduction ([1-intro.ipynb](file:///d:/Langchain/project1/krish_naik/1-intro.ipynb))
+### 1. Agent Introduction ([1-intro.ipynb](file:///d:/Langchain/project1/1-intro.ipynb))
 Learn how to define helper functions as tools and instantiate an autonomous decision-making engine.
 * **Core API**: `langchain.agents.create_agent`
 * **Workflow**: Initializes compiled state graphs, binds a tool function, and runs execution loops.
@@ -148,7 +148,7 @@ Learn how to define helper functions as tools and instantiate an autonomous deci
 
 ---
 
-### 2. Multi-Provider Integration ([2-model_integration.ipynb](file:///d:/Langchain/project1/krish_naik/2-model_integration.ipynb))
+### 2. Multi-Provider Integration ([2-model_integration.ipynb](file:///d:/Langchain/project1/2-model_integration.ipynb))
 Explore standard interfaces to communicate with different providers and optimization strategies like streaming and batching.
 * **Concepts**:
   - `init_chat_model` for provider-agnostic instantiation.
@@ -170,7 +170,7 @@ Explore standard interfaces to communicate with different providers and optimiza
 
 ---
 
-### 3. Custom Tools ([3-tools.ipynb](file:///d:/Langchain/project1/krish_naik/3-tools.ipynb))
+### 3. Custom Tools ([3-tools.ipynb](file:///d:/Langchain/project1/3-tools.ipynb))
 Deep dive into defining tool schemas and executing tools manually inside custom agent orchestration loops.
 * **Concepts**:
   - The `@tool` decorator to auto-generate JSON schemas from docstrings and signatures.
@@ -196,7 +196,7 @@ Deep dive into defining tool schemas and executing tools manually inside custom 
 
 ---
 
-### 4. Message Types & History ([4-messages.ipynb](file:///d:/Langchain/project1/krish_naik/4-messages.ipynb))
+### 4. Message Types & History ([4-messages.ipynb](file:///d:/Langchain/project1/4-messages.ipynb))
 Understand context-carrying objects in LangChain and how conversational memory works.
 * **Key Message Types**:
   - `SystemMessage`: Instruction set to guide model behavior and tone.
@@ -218,7 +218,7 @@ Understand context-carrying objects in LangChain and how conversational memory w
 
 ---
 
-### 5. Structured Output ([5-structuredoutput.ipynb](file:///d:/Langchain/project1/krish_naik/5-structuredoutput.ipynb))
+### 5. Structured Output ([5-structuredoutput.ipynb](file:///d:/Langchain/project1/5-structuredoutput.ipynb))
 Learn how to constrain responses to guaranteed data structures, critical for downstream APIs or database storage.
 * **Methods**:
   - **Pydantic**: Rich validation, fields descriptions, nested types.
@@ -236,6 +236,35 @@ Learn how to constrain responses to guaranteed data structures, critical for dow
   model_structured = model.with_structured_output(Movie)
   inception = model_structured.invoke("Provide description of the movie Inception")
   print(inception.director) # Christopher Nolan
+  ```
+
+---
+
+### 6. Middleware ([6-middleware.ipynb](file:///d:/Langchain/project1/6-middleware.ipynb))
+Intercept and control agent workflows to manage state boundaries and secure tool execution.
+* **Concepts**:
+  - **Summarization Middleware**: Truncates or summarizes conversation history automatically by message count or token count thresholds.
+  - **Human-in-the-Loop Middleware**: Interrupts tool execution on specific high-stakes functions (e.g., database writes, financial actions, or sending emails) to request manual approval, edit arguments, or reject.
+* **Code Highlight**:
+  ```python
+  from langchain.agents import create_agent
+  from langchain.agents.middleware import HumanInTheLoopMiddleware
+  from langgraph.checkpoint.memory import InMemorySaver
+
+  agent = create_agent(
+      model=model,
+      checkpointer=InMemorySaver(),
+      tools=[send_email],
+      middleware=[
+          HumanInTheLoopMiddleware(
+              interrupt_on={
+                  "send_email": {
+                      "allowed_decisions": ["approve", "edit", "reject"]
+                  }
+              }
+          )
+      ]
+  )
   ```
 
 ---
